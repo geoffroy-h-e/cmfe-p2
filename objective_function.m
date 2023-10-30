@@ -10,7 +10,7 @@ function obj = objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
     sum_val = 0;
     for t = 1:T
         X(t+1) = X(t) - u(t);
-        sum_val = sum_val + (X(t)' * B * ((I - Phi)^t) * f0_sampled) - (0.5 * u(t)' * Lamda * u(t));
+        sum_val = sum_val + (X(t)' * B * mpower((I - Phi)^t) * f0_sampled) - (0.5 * u(t)' * Lamda * u(t));
     end
     obj = -sum_val; % Negative since we want to maximize
 end
