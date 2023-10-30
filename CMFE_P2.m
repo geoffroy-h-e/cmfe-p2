@@ -26,3 +26,4 @@ beq(1) = X0;
 Aineq = [eye(T); -eye(T)];
 bineq = zeros(2*T, 1);
 
+%test
