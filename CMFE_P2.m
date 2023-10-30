@@ -32,8 +32,12 @@ end
 Aeq(1,1) = 1;
 beq(1) = X0;
 
-Aineq = [];
-bineq = [];
+% Inequality constraints for u_t <= 0
+Aineq = -eye(T);  % Negative identity matrix
+bineq = zeros(T, 1);  % Vector of zeros of length T
 
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
+
+
+
