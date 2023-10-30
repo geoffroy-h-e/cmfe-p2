@@ -6,7 +6,7 @@ Phi = [0.7146 0; 0 0.0353];
 Psi = [0.0378 0; 0 0.0947]; 
 Sigma = 0.0428; % var e t 
 Lamda = 2.14*10^-5; % cost of transaction on a typical 1k shares
-I = 0
+I = [1 0; 0 1]; %identity matrix
 U = 0 % do we need to initialize u? 
 
 f0_mean = [0 0];
