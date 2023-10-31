@@ -1,25 +1,26 @@
-% setting key values 
-T = 12; % time interval
-X0 = 100000; % initial number of shares 
-B = [0.3375; -0.072]; % factor loading matrix adjusted
-Phi = [0.7146 0; 0 0.0353]; 
-Psi = [0.0378 0; 0 0.0947]; 
-Sigma = 0.0428; % var e t 
-Lamda = 2.14*10^-5; % cost of transaction on a typical 1k shares
-I = eye(2); % identity matrix
-
-f0_mean = [0; 0];
-Omega0 = [0.0412 0; 0 1.3655]; % cov of fzero 
-f0_sampled = mvnrnd(f0_mean, Omega0, 1)'; % sampled f0 as column vector 
-
-iterations = 100;
-
 % Initialization
+iterations = 100;
 X_opt_all = zeros(T, iterations);
 avg_TC_all = zeros(iterations, 1);
 avg_AG_all = zeros(iterations, 1);
 
 for iter = 1:iterations
+
+    % setting key values 
+    T = 12; % time interval
+    X0 = 100000; % initial number of shares 
+
+    B = [0.3375; -0.072]; % factor loading matrix adjusted
+
+    Phi = [0.7146 0; 0 0.0353]; 
+    Psi = [0.0378 0; 0 0.0947]; 
+    Sigma = 0.0428; % var e t 
+    Lamda = 2.14*10^-5; % cost of transaction on a typical 1k shares
+    I = eye(2); % identity matrix
+
+    f0_mean = [0; 0];
+    Omega0 = [0.0412 0; 0 1.3655]; % cov of fzero 
+    f0_sampled = mvnrnd(f0_mean, Omega0, 1)'; % sampled f0 as column vector 
 
     % Set the optimization options
     options = optimoptions('fmincon', 'Display', 'off', 'Algorithm', 'sqp'); % Turn off display for smoother simulation
@@ -67,7 +68,7 @@ for iter = 1:iterations
 
     [~, X_opt,TC1, TC2, AG] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
-    X_opt_all(:, iter) = X_opt;
+    X_opt_all(, iter) = X_opt;
     avg_TC_all(iter) = -sum(TC2)/ T; 
     avg_AG_all(iter) = sum(AG) / T; 
 end

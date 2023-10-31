@@ -7,7 +7,7 @@ B = [0.3375; -0.072]; % factor loading matrix adjusted
 Phi = [0.7146 0; 0 0.0353]; 
 Psi = [0.0378 0; 0 0.0947]; 
 Sigma = 0.0428; % var e t 
-Lamda = 2.14*10^-5; % cost of transaction on a typical 1k shares
+Lamda = 2.14e-5; % cost of transaction on a typical 1k shares
 I = eye(2); % identity matrix
 
 f0_mean = [0; 0];
@@ -35,13 +35,11 @@ beq(1) = X0;
 Aeq(T,:) = ones(1, T);
 beq(T) = -X0; % total sum to reach 0 at x(T)(on a certain tolerance level) 
 
-% Inequality constraints for u_t <= 0
+% Inequality constraints for u(t) <= 0
 Aineq_ut = -eye(T);
 bineq_ut = zeros(T, 1);
-
-% Explicitly set u(t) to be less than or equal to 0 for all t
-Aineq_ut_explicit = -eye(T);  % Negative identity matrix
-bineq_ut_explicit = zeros(T, 1);  % Vector of zeros of length T
+Aineq_ut2 = -eye(T);  % Negative identity matrix
+bineq_ut2 = zeros(T, 1);  % Vector of zeros of length T
 
 % Inequality constraints for ensuring x(t) is less than or equal to x_0
 Aineq_X_leq_X0 = tril(ones(T, T));
@@ -52,17 +50,19 @@ Aineq_X = tril(ones(T, T));
 bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))];
 
 % Combine all the constraints
-Aineq = [Aineq_ut; Aineq_X_leq_X0; Aineq_ut_explicit];
-bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut_explicit];
+Aineq = [Aineq_ut; Aineq_X_leq_X0; Aineq_ut2];
+bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut2];
 
 
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
 
-[~, X_opt, TC, AG] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
+[~, X_opt, TC1, TC2, AG] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
 disp(X_opt);
-avg_TC = -sum(TC) / 12; 
-avg_AG = sum(AG) / 12; 
-disp(avg_TC)
+avg_TC1 = -sum(TC1) / T; 
+avg_TC2 = -sum(TC2) / T; 
+avg_AG = sum(AG) / T; 
+disp(avg_TC1)
+disp(avg_TC2)
 disp(avg_AG)
