@@ -30,17 +30,16 @@ for t = 2:T
     Aeq(t, 1:t) = ones(1, t);
 end
 
-% Setting up the first constraint for initial value and the final value constraint
 Aeq(1,1) = 1;
 beq(1) = X0;
 Aeq(T,:) = ones(1, T);
-beq(T) = -X0;  % the total sum of trades should be -X0 to reach 0 at x(T)
+beq(T) = -X0; % total sum of trades should be -X0 to reach 0 at x(T)
 
 % Inequality constraints for u_t <= 0
 Aineq_ut = -eye(T);
 bineq_ut = zeros(T, 1);
 
-% Explicitly set u(t) to be less than or equal to 0 for all t
+% Inequality constraints for u_t <= 0
 Aineq_ut_explicit = -eye(T);  % Negative identity matrix
 bineq_ut_explicit = zeros(T, 1);  % Vector of zeros of length T
 
