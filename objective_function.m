@@ -1,7 +1,7 @@
 function [obj, X] = objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
     
     T = length(u);
-    X = zeros(T, 1);
+    X = zeros(T+1, 1);
     X(1) = X0;
 
     sum_val = 0;

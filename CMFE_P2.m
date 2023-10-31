@@ -23,28 +23,26 @@ objFun = @(u) objective_function(u, X0, B, Phi, f0_sampled, Lamda, I);
 % Set initial guess for u
 u0 = zeros(T, 1);
 
-% Equality and inequality constraints
+% Equality constraints for X(t)
 Aeq = zeros(T, T);
 beq = -X0 * ones(T, 1);
-Aeq(1,1) = 1;
 for t = 2:T
     Aeq(t, 1:t) = ones(1, t);
 end
-
 Aeq(1,1) = 1;
 beq(1) = X0;
 
-% Inequality constraints for u_t <= 0
-Aineq_ut = -eye(T);
-bineq_ut = zeros(T, 1);
+% every u(t) less than or equal to 0 for all t
+Aineq_ut_explicit = -eye(T);  % Negative identity matrix
+bineq_ut_explicit = zeros(T, 1);  % Vector of zeros of length T
 
-% Inequality constraints for x(t) + u(t) > 0
-Aineq_X = tril(ones(T, T)); 
-bineq_X = repmat(X0, T, 1);
+% x(t) is always positive
+Aineq_X = tril(ones(T, T));
+bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))]; 
 
-% Stack the constraints
-Aineq = [Aineq_ut; Aineq_X];
-bineq = [bineq_ut; bineq_X];
+% Combine all the constraints
+Aineq = [Aineq_ut; Aineq_X; Aineq_ut_explicit];
+bineq = [bineq_ut; bineq_X; bineq_ut_explicit];
 
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
