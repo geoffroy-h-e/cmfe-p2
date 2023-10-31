@@ -62,5 +62,7 @@ bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut_explicit];
 [~, X_opt, TC, AG] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
 disp(X_opt);
-total_TC = -sum(TC) / 12; 
-disp(total_TC)
+avg_TC = -sum(TC) / 12; 
+avg_AG = sum(AG) / 12; 
+disp(avg_TC)
+disp(avg_AG)
