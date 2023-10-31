@@ -29,20 +29,32 @@ beq = -X0 * ones(T, 1);
 for t = 2:T
     Aeq(t, 1:t) = ones(1, t);
 end
+
+% Setting up the first constraint for initial value and the final value constraint
 Aeq(1,1) = 1;
 beq(1) = X0;
+Aeq(T,:) = ones(1, T);
+beq(T) = -X0;  % the total sum of trades should be -X0 to reach 0 at x(T)
 
-% every u(t) less than or equal to 0 for all t
+% Inequality constraints for u_t <= 0
+Aineq_ut = -eye(T);
+bineq_ut = zeros(T, 1);
+
+% Explicitly set u(t) to be less than or equal to 0 for all t
 Aineq_ut_explicit = -eye(T);  % Negative identity matrix
 bineq_ut_explicit = zeros(T, 1);  % Vector of zeros of length T
 
-% x(t) is always positive
+% Inequality constraints for ensuring x(t) is less than or equal to x_0
+Aineq_X_leq_X0 = tril(ones(T, T));
+bineq_X_leq_X0 = zeros(T, 1);  % Since the sum of u should always be less than or equal to 0
+
+% Inequality constraints for ensuring x(t) is always positive
 Aineq_X = tril(ones(T, T));
-bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))]; 
+bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))];
 
 % Combine all the constraints
-Aineq = [Aineq_ut; Aineq_X; Aineq_ut_explicit];
-bineq = [bineq_ut; bineq_X; bineq_ut_explicit];
+Aineq = [Aineq_ut; Aineq_X_leq_X0; Aineq_ut_explicit];
+bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut_explicit];
 
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
@@ -50,6 +62,5 @@ bineq = [bineq_ut; bineq_X; bineq_ut_explicit];
 [~, X_opt] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
 disp(X_opt);
-
 
 
