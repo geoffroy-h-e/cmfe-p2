@@ -25,10 +25,12 @@ u0 = zeros(T, 1);
 
 % Equality and inequality constraints
 Aeq = zeros(T, T);
-beq = zeros(T, 1);
+beq = -X0 * ones(T, 1);
+Aeq(1,1) = 1;
 for t = 2:T
-    Aeq(t, t-1:t) = [1, -1];
+    Aeq(t, 1:t) = ones(1, t);
 end
+
 Aeq(1,1) = 1;
 beq(1) = X0;
 
@@ -38,6 +40,8 @@ bineq = zeros(T, 1);  % Vector of zeros of length T
 
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
+
+[~, X_opt] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
 
 
