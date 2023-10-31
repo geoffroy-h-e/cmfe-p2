@@ -66,3 +66,4 @@ avg_AG = sum(AG) / T;
 disp(avg_TC1)
 disp(avg_TC2)
 disp(avg_AG)
+

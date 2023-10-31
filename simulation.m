@@ -8,18 +8,20 @@ Sigma = 0.0428; % var e t
 Lamda = 2.14*10^-5; % cost of transaction on a typical 1k shares
 I = eye(2); % identity matrix
 
-f0_mean = [0; 0];
-Omega0 = [0.0412 0; 0 1.3655]; % cov of fzero 
-f0_sampled = mvnrnd(f0_mean, Omega0, 1)'; % sampled f0 as column vector 
-
-iterations = 100;
+iterations = 10000;
 
 % Initialization
 X_opt_all = zeros(T, iterations);
 avg_TC_all = zeros(iterations, 1);
 avg_AG_all = zeros(iterations, 1);
 
+tic; 
+
 for iter = 1:iterations
+
+    f0_mean = [0; 0];
+    Omega0 = [0.0412 0; 0 1.3655]; % cov of fzero 
+    f0_sampled = mvnrnd(f0_mean, Omega0, 1)'; % sampled f0 as column vector 
 
     % Set the optimization options
     options = optimoptions('fmincon', 'Display', 'off', 'Algorithm', 'sqp'); % Turn off display for smoother simulation
@@ -72,7 +74,18 @@ for iter = 1:iterations
     avg_AG_all(iter) = sum(AG) / T; 
 end
 
-disp('Average TC over all iterations:');
+toc
+
+disp('Mean TC over all iterations:');
 disp(mean(avg_TC_all));
-disp('Average AG over all iterations:');
+disp('Mean AG over all iterations:');
 disp(mean(avg_AG_all));
+
+SE_TC = std(avg_TC_all) / sqrt(length(avg_TC_all));
+SE_AG = std(avg_AG_all) / sqrt(length(avg_AG_all));
+
+disp('Standard error for Mean TC:');
+disp(SE_TC);
+disp('Standard error for Mean AG:');
+disp(SE_AG);
+
