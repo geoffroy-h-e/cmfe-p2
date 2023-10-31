@@ -35,13 +35,23 @@ Aeq(1,1) = 1;
 beq(1) = X0;
 
 % Inequality constraints for u_t <= 0
-Aineq = -eye(T);  % Negative identity matrix
-bineq = zeros(T, 1);  % Vector of zeros of length T
+Aineq_ut = -eye(T);
+bineq_ut = zeros(T, 1);
+
+% Inequality constraints for x(t) + u(t) > 0
+Aineq_X = tril(ones(T, T)); 
+bineq_X = repmat(X0, T, 1);
+
+% Stack the constraints
+Aineq = [Aineq_ut; Aineq_X];
+bineq = [bineq_ut; bineq_X];
 
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
 
 [~, X_opt] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
+
+disp(X_opt);
 
 
 
