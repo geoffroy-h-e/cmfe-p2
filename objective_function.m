@@ -1,4 +1,4 @@
-function [obj, X] = objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
+function [obj, X, TC, AG] = objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
     
     T = length(u);
     X = zeros(T, 1);
@@ -11,6 +11,7 @@ function [obj, X] = objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
         X(t+1) = X(t) + u(t);
         
         TC(t) = 0.5 * u(t)^2 * Lamda;
+        
         AG(t) = X(t) * B' * ((I - Phi)^t * f0_sampled);
         
         sum_val = sum_val + AG(t) - TC(t);

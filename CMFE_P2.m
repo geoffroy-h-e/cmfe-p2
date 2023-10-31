@@ -59,6 +59,8 @@ bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut_explicit];
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
 
-[~, X_opt] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
+[~, X_opt, TC, AG] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
 disp(X_opt);
+total_TC = -sum(TC) / 12; 
+disp(total_TC)
