@@ -2,7 +2,7 @@
 T = 12; % time interval
 X0 = 100000; % initial number of shares 
 
-B = [0.3375; -0.072]; % factor loading matrix adjusted to 2x1
+B = [0.3375; -0.072]; % factor loading matrix adjusted
 
 Phi = [0.7146 0; 0 0.0353]; 
 Psi = [0.0378 0; 0 0.0947]; 
@@ -33,13 +33,13 @@ end
 Aeq(1,1) = 1;
 beq(1) = X0;
 Aeq(T,:) = ones(1, T);
-beq(T) = -X0; % total sum of trades should be -X0 to reach 0 at x(T)
+beq(T) = -X0; % total sum to reach 0 at x(T)(on a certain tolerance level) 
 
 % Inequality constraints for u_t <= 0
 Aineq_ut = -eye(T);
 bineq_ut = zeros(T, 1);
 
-% Inequality constraints for u_t <= 0
+% Explicitly set u(t) to be less than or equal to 0 for all t
 Aineq_ut_explicit = -eye(T);  % Negative identity matrix
 bineq_ut_explicit = zeros(T, 1);  % Vector of zeros of length T
 
@@ -55,11 +55,10 @@ bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))];
 Aineq = [Aineq_ut; Aineq_X_leq_X0; Aineq_ut_explicit];
 bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut_explicit];
 
+
 % Call optimization solver
 [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
 
 [~, X_opt] = objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
 disp(X_opt);
-
-
