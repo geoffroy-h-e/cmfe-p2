@@ -1,23 +1,44 @@
-function [obj, X] = pf_objective_function(u, X0, B, Phi, f, Lamda, I)
-    
+function obj = pf_objective_function(u, X0, B, Phi, f0_sampled, Lamda, I, Psi, Omega0)
     T = length(u);
     X = zeros(T, 1);
     X(1) = X0;
-    f = f0_sampled
-
 
     sum_val = 0;
+    
     for t = 1:T-1
         X(t+1) = X(t) + u(t);
-        
+
         % Updating f for each timestep
-        for i = 1:nbsimul
-            %epsilon = mvnrnd(f0_mean, Psi);
-            f = (I - Phi) * f; 
-        end
+        epsilon = mvnrnd([0; 0], Psi);
+        f = (I - Phi) * f0_sampled + epsilon';
 
         sum_val = sum_val + X(t) * B' * (I - Phi) * f - (0.5 * u(t)^2 * Lamda);
     end
-    obj = -sum_val; % Negative since we want to maximize
-end
 
+    % Perform a Monte Carlo simulation to find the best sample path of factors f
+    num_samples = 15; 
+    best_obj = -Inf;
+
+    for sample = 1:num_samples
+        f_temp = f0_sampled;
+
+        for t = 1:T-1
+            epsilon_temp = mvnrnd([0; 0], Psi);
+            f_temp = (I - Phi) * f_temp + epsilon_temp';
+        end
+
+        obj_temp = B' * (I - Phi) * f_temp;
+        
+        if obj_temp > best_obj
+            best_obj = obj_temp;
+        end
+    end
+
+    % Return the negative of the best objective value since we want to maximize
+    obj = -sum_val - best_obj;
+
+    if nargin == 8
+  
+        f0_sampled = mvnrnd(f0_mean, Omega0)';
+    end
+end
