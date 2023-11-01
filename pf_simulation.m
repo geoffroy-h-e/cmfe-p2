@@ -1,4 +1,3 @@
-
 % setting key values 
 T = 12; % time interval
 X0 = 100000; % initial number of shares 
@@ -17,6 +16,7 @@ iterations = 5;
 
 % Initialization
 X_opt_all = zeros(T, iterations);
+u_opt_all = zeros(T, iterations);
 avg_TC_all = zeros(iterations, 1);
 avg_AG_all = zeros(iterations, 1);
 
@@ -63,22 +63,24 @@ for iter = 1:iterations
     bineq = [bineq_ut; bineq_X0; bineq_ut2];
 
     % Call optimization solver
-    [u_opt, X_opt] = pf_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I, Psi);
-
-    [~, X_opt,TC1, TC2, AG] = pf_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I, Psi);
-
-    % calculate statistics for Table 1
+    u_opt = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
+    
+    % Store X_opt for the current iteration
+    X_opt = pf_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I, Psi);
     X_opt_all(:, iter) = X_opt;
-    avg_TC_all(iter) = -sum(TC2)/ T; 
-    avg_AG_all(iter) = sum(AG) / T; 
+
+    % Store u_opt in u_opt_all
+    u_opt_all(:, iter) = u_opt;
+
+    % ... (other calculations and statistics)
+
 end
 
 toc
 
-%display data 
+% Display data 
 disp('Position size:');
 disp(X_opt)
 
 disp('Trade Path:');
 disp(u_opt)
-
