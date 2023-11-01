@@ -44,30 +44,30 @@ for iter = 1:iterations
     Aeq(T,:) = ones(1, T);
     beq(T) = -X0; % total sum to reach 0 at x(T)(on default tolerance level) 
     
-    % Inequality constraints for u(t) less or equal to 0
+    % Inequality constraints for u(t) equal or inferior to 0
     Aineq_ut = -eye(T);
     bineq_ut = zeros(T, 1);
     Aineq_ut2 = -eye(T);  % Negative identity matrix
-    bineq_ut2 = zeros(T, 1);  % Vector of zeros
+    bineq_ut2 = zeros(T, 1);  % Vector of zeros of length T
     
     % Inequality constraints for ensuring x(t) is less than or equal to x0
-    Aineq_X0 = tril(ones(T, T));
-    bineq_X0 = zeros(T, 1);  % Since the sum of u should always be less than or equal to 0
+    Aineq_X_leq_X0 = tril(ones(T, T));
+    bineq_X_leq_X0 = zeros(T, 1);  % Since the sum of u should always be less than or equal to 0
     
     % Inequality constraints for ensuring x(t) is always positive
     Aineq_X = tril(ones(T, T));
     bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))];
     
     % Combine all the constraints
-    Aineq = [Aineq_ut; Aineq_X0; Aineq_ut2];
-    bineq = [bineq_ut; bineq_X0; bineq_ut2];
+    Aineq = [Aineq_ut; Aineq_X_leq_X0; Aineq_ut2];
+    bineq = [bineq_ut; bineq_X_leq_X0; bineq_ut2];
 
     % Call optimization solver
     [u_opt, obj_val] = fmincon(objFun, u0, Aineq, bineq, Aeq, beq, [], [], [], options);
 
     [~, X_opt,TC1, TC2, AG] = det_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I);
 
-    % calculate statistics for Table 1
+    % calculate statistics
     X_opt_all(:, iter) = X_opt;
     avg_TC_all(iter) = -sum(TC2)/ T; 
     avg_AG_all(iter) = sum(AG) / T; 
@@ -75,7 +75,6 @@ end
 
 toc
 
-%display data 
 disp('Position size:');
 disp(X_opt)
 
