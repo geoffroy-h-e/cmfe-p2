@@ -1,4 +1,4 @@
-function [obj, X, TC1, TC2, AG] = objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
+function [obj, X, TC1, TC2, AG] = det_objective_function(u, X0, B, Phi, f0_sampled, Lamda, I)
     
     T = length(u);
     X = zeros(T, 1);
