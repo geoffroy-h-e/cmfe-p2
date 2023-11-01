@@ -1,54 +1,84 @@
-%pf_simulation
 
 % setting key values 
-T = 12; 
-X0 = 100000; 
-B = [0.3375; -0.072];
+T = 12; % time interval
+X0 = 100000; % initial number of shares 
+B = [0.3375; -0.072]; % factor loading matrix adjusted
 Phi = [0.7146 0; 0 0.0353]; 
-Psi = [0.0378 0; 0 0.0947];
-Lamda = 2.14*10^-5; 
-I = eye(2);
+Psi = [0.0378 0; 0 0.0947]; 
+Sigma = 0.0428; % var e t %not useful? 
+Lamda = 2.14*10^-5; % cost of transaction on a typical 1k shares
+I = eye(2); % identity matrix
 
 f0_mean = [0; 0];
 Omega = [0.0412 0; 0 1.3655]; % cov of fzero 
 f0_sampled = mvnrnd(f0_mean, Omega, 1)'; % sampled f0 as column vector 
 
-% Monte Carlo
-iterations_pf = 100;
-opt_u = []; % store the best control sequence
-best_obj = -Inf; % initial objective value (negative infinity since we are maximizing)
-obj_values = zeros(iterations_pf, 1); % Store all objective values
+iterations = 5;
 
-for i = 1:iterations_pf
-    % Generate a random control sequence for this sample ensuring u(t) <= 0
-    u_sample = -abs(randn(T-1, 1));
-    
-    % Temporary X to calculate the value of X(T-1)
-    X_temp = [X0; zeros(T-1, 1)];
-    for t = 1:T-1
-        X_temp(t+1) = X_temp(t) + u_sample(t);
+% Initialization
+X_opt_all = zeros(T, iterations);
+avg_TC_all = zeros(iterations, 1);
+avg_AG_all = zeros(iterations, 1);
+
+tic; 
+
+for iter = 1:iterations
+
+    % Set the optimization options, no display for better Elapsed time
+    options = optimoptions('fmincon', 'Display', 'off', 'Algorithm', 'sqp'); 
+    % anonymous function
+    objFun = @(u) pf_objective_function(u, X0, B, Phi, f0_sampled, Lamda, I, Psi);
+
+    % Initiate U
+    u0 = zeros(T, 1);
+
+    % Equality constraints for X(t)
+    Aeq = zeros(T, T);
+    beq = -X0 * ones(T, 1);
+    for t = 2:T
+        Aeq(t, 1:t) = ones(1, t);
     end
     
-    % Ensure X(T) = 0 by modifying the last value of u_sample
-    u_sample(end) = -X_temp(end);
+    Aeq(1,1) = 1;
+    beq(1) = X0;
+    Aeq(T,:) = ones(1, T);
+    beq(T) = -X0; % total sum to reach 0 at x(T)(on default tolerance level) 
     
-    % Evaluate the objective function for this sequence
-    [obj_value, ~] = pf_objective_function(u_sample, X0, B, Phi, f0_sampled, Lamda, I, Psi);
-    obj_values(i) = obj_value;
+    % Inequality constraints for u(t) less or equal to 0
+    Aineq_ut = -eye(T);
+    bineq_ut = zeros(T, 1);
+    Aineq_ut2 = -eye(T);  % Negative identity matrix
+    bineq_ut2 = zeros(T, 1);  % Vector of zeros
+    
+    % Inequality constraints for ensuring x(t) is less than or equal to x0
+    Aineq_X0 = tril(ones(T, T));
+    bineq_X0 = zeros(T, 1);  % Since the sum of u should always be less than or equal to 0
+    
+    % Inequality constraints for ensuring x(t) is always positive
+    Aineq_X = tril(ones(T, T));
+    bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))];
+    
+    % Combine all the constraints
+    Aineq = [Aineq_ut; Aineq_X0; Aineq_ut2];
+    bineq = [bineq_ut; bineq_X0; bineq_ut2];
 
-    % If this sequence is better than the previous best, store it
-    if obj_value > best_obj
-        best_obj = obj_value;
-        best_u = u_sample;
-    end
+    % Call optimization solver
+    [u_opt, X_opt] = pf_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I, Psi);
+
+    [~, X_opt,TC1, TC2, AG] = pf_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I, Psi);
+
+    % calculate statistics for Table 1
+    X_opt_all(:, iter) = X_opt;
+    avg_TC_all(iter) = -sum(TC2)/ T; 
+    avg_AG_all(iter) = sum(AG) / T; 
 end
 
-% Compute standard error
-std_dev = std(obj_values);
-SE = std_dev/sqrt(iterations_pf);
+toc
 
-% Display results
-disp('Best control sequence:');
-disp(best_u);
-disp(['Max objective value: ', num2str(best_obj)]);
-disp(['Standard error of the max objective value: ', num2str(SE)]);
+%display data 
+disp('Position size:');
+disp(X_opt)
+
+disp('Trade Path:');
+disp(u_opt)
+

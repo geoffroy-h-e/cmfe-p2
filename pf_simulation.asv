@@ -1,6 +1,6 @@
-%pf_simulation
+% Define the main function that will use fmincon
 
-% setting key values 
+% Constants and Parameters
 T = 12; 
 X0 = 100000; 
 B = [0.3375; -0.072];
@@ -10,36 +10,46 @@ Lamda = 2.14*10^-5;
 I = eye(2);
 
 f0_mean = [0; 0];
-Omega = [0.0412 0; 0 1.3655]; % cov of fzero 
-f0_sampled = mvnrnd(f0_mean, Omega, 1)'; % sampled f0 as column vector 
+Omega = [0.0412 0; 0 1.3655]; 
+f0_sampled = mvnrnd(f0_mean, Omega, 1)'; 
 
-% Monte Carlo
-iterations = 100;
-opt_u = []; % store the best control sequence
-best_obj = -Inf; % initial objective value (negative infinity since we are maximizing)
-obj_values = zeros(iterations, 1); % Store all objective values
+% Initial guess for U
+u0 = zeros(T, 1);
 
-for i = 1:iterations
-    % Generate a random control sequence for this sample
-    u_sample = randn(T-1, 1);
-
-    % Evaluate the objective function for this sequence
-    [obj_value, ~] = pf_objective_function(u_sample, X0, B, Phi, f0_sampled, Lamda, I, Psi);
-    obj_values(i) = obj_value;
-
-    % If this sequence is better than the previous best, store it
-    if obj_value > best_obj
-        best_obj = obj_value;
-        opt_u = u_sample;
-    end
+% Equality constraints for X(t)
+Aeq = zeros(T, T);
+beq = zeros(T, 1);
+for t = 2:T
+    Aeq(t, 1:t) = ones(1, t);
 end
+Aeq(T,:) = ones(1, T);
+beq(T) = 0;
 
-% Compute standard error
-std_dev = std(obj_values);
-SE = std_dev/sqrt(iterations);
+% Inequality constraints for u(t) less or equal to 0
+Aineq_ut = -eye(T);
+bineq_ut = zeros(T, 1);
+
+% Inequality constraints for ensuring x(t) is always positive
+Aineq_X = tril(ones(T, T));
+bineq_X = repmat(X0, T, 1) - [0; cumsum(abs(u0(1:T-1)))];
+
+% Inequality constraints for ensuring x(t) is not superior to X0
+Aineq_X0 = tril(ones(T, T));
+bineq_X0 = X0 * ones(T, 1);
+
+% Combine all the constraints
+Aineq = [Aineq_ut; Aineq_X; Aineq_X0];
+bineq = [bineq_ut; bineq_X; bineq_X0];
+
+% Optimization
+options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
+[u_opt, fval] = fmincon(@(u) pf_objective_function(u, X0, B, Phi, f0_sampled, Lamda, I, Psi), u0, Aineq, bineq, Aeq, beq, [], [], [], options);
+
+[~, X_opt] = pf_objective_function(u_opt, X0, B, Phi, f0_sampled, Lamda, I, Psi);
 
 % Display results
-disp('Best control sequence:');
-disp(opt_u);
-disp(['Max objective value: ', num2str(best_obj)]);
-disp(['Standard error of the max objective value: ', num2str(SE)]);
+disp('Optimal control sequence:');
+disp(u_opt);
+disp(['Min objective value: ', num2str(fval)]);
+disp('Values of x:');
+disp(X_opt);

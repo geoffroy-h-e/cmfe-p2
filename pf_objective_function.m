@@ -1,5 +1,4 @@
 function [obj, X] = pf_objective_function(u, X0, B, Phi, f0_sampled, Lamda, I, Psi)
-    
     T = length(u);
     X = zeros(T, 1);
     X(1) = X0;
@@ -12,10 +11,10 @@ function [obj, X] = pf_objective_function(u, X0, B, Phi, f0_sampled, Lamda, I, P
         
         % Updating f for each timestep
         epsilon = mvnrnd([0; 0], Psi);
-        f = (I - Phi) * f + epsilon'; 
+        f = (I - Phi) * f + epsilon;
 
         sum_val = sum_val + X(t) * B' * (I - Phi) * f - (0.5 * u(t)^2 * Lamda);
     end
+
     obj = -sum_val; % Negative since we want to maximize
 end
-
